@@ -1,0 +1,63 @@
+clc
+clear all
+format short
+
+%INPUT 
+NoOfVariables=3;
+Cost=[ -1 3 -2 0 0 0 0];
+Mat=[3 -1 2;-2 4 0;-4 3 8];
+B=[7;12;10];
+S=eye(size(Mat,1));% eye is identity matrix of 3x3
+A=[Mat S B];
+%BV
+BV=NoOfVariables + 1:size(A,2)-1;
+%calculate Zj-Cj
+ZjCj = Cost(BV)*A - Cost;
+
+%print table
+ZCj= [ZjCj;A];
+
+RUN=true;
+while RUN
+if any(ZjCj<0);
+    fprintf('Current Solution not optimal\n')
+
+  %finding entering variable
+  zc=ZjCj(1:end-1);
+  [Enter_val,pvt_col]=min(zc);
+
+if all(A(:,pvt_col)<=0)
+error('LPP is Unbounded');
+else
+    sol=A(:,end);
+    Column=A(:,pvt_col);
+    for i= 1:size(A,1)
+        if Column(i)>0
+    ratio(i)=sol(i)./Column(i);
+        else ratio(i)=inf;
+        
+        end
+    end 
+%find minimum
+[MinRatio,pvt_row]=min(ratio);
+end
+
+
+%pivot key
+BV(pvt_row)=pvt_col;
+pvt_key=A(pvt_row,pvt_col);
+% row operations
+A(pvt_row,:)=A(pvt_row,:)./pvt_key;
+for i= 1:size(A,1)
+    if i~=pvt_row
+        A(i,:)=A(i,:)-A(i,pvt_col).*A(pvt_row,:);
+    end
+end
+
+ZjCj=ZjCj - ZjCj(pvt_col).*A(pvt_row,:); 
+zcj=[ZjCj;A]
+else 
+    RUN =false;
+    disp('Optimal Solution Found')
+end
+end
